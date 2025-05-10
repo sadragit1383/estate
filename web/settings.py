@@ -82,16 +82,20 @@ CORS_ALLOW_CREDENTIALS = True
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',  # استفاده از دیتابیس Postgres
-        'NAME': 'user_app',                      # نام دیتابیس
-        'USER': 'user_app',                          # نام کاربر دیتابیس
-        'PASSWORD': 'sadra1383@gmail.com_user',                  # رمز عبور کاربر
-        'HOST': 'localhost',                       # آدرس سرور دیتابیس (اگر روی همان سرور است: localhost)
-        'PORT': '5432',                            # پورت پیش‌فرض PostgreSQL
-    }
+    'user': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'user_app',
+        'USER': 'user_app',
+        'PASSWORD': 'sadra1383@gmail.com_user',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
 }
+
+
 
 
 # Password validation
