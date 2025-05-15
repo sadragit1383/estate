@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from .meta.meta_class import DynamicFieldMeta
 from .validation.user_validation import CleanFieldsMixin, ValidMobileNumber, PasswordValidator
 from .abstract_model import AbstractBaseModel
-
+from .user_mixin import UserMethodsMixin
+from rest_framework import status
 
 def validate_password(value):
     validator = PasswordValidator()
@@ -78,18 +79,25 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, mobile_number, password=None, **extra_fields):
+    def create_superuser(self, mobile_number, password, **extra_fields):
         """
-        Creates a superuser with given mobile number and password.
+        Creates and saves a superuser with the given mobile number and password.
         """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
 
-        # Validate required fields
-        for field in self.model.REQUIRED_FIELDS:
-            if field not in extra_fields:
-                raise ValueError(f'فیلد {field} برای سوپر یوزر ضروری است.')
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        # Add explicit check for password as it's no longer optional in the signature
+        if not password:
+             raise ValueError('Superuser must have a password.')
+
+        # Call create_user with the now required password
+        return self.create_user(mobile_number, password, **extra_fields)
 
         return self.create_user(mobile_number, password, **extra_fields)
 
@@ -98,6 +106,31 @@ class UserManager(BaseUserManager):
         Checks if a user with the given mobile number exists.
         """
         return self.model.objects.filter(mobileNumber=mobile_number).exists()
+
+
+
+    def verify_user_otp(self, mobile_number, active_code):
+        """
+        High-level OTP verification method
+        Returns tuple: (user: User, error_message: str, status_code: int)
+        """
+        try:
+            user = self.get(mobileNumber=mobile_number)
+            user_secret = UserSecret.objects.get(user=user)
+
+            is_valid, message, code = user_secret.verify_otp(active_code)
+            if not is_valid:
+                return None, message, code
+
+            user_secret.mark_as_verified()
+            return user, message, code
+
+        except User.DoesNotExist:
+            return None, "User with this mobile number not found.", status.HTTP_404_NOT_FOUND
+        except UserSecret.DoesNotExist:
+            return None, "OTP verification record not found.", status.HTTP_404_NOT_FOUND
+
+
 
     def create_user_secret(self, user):
         active_code = utils.create_random_code(5)  # تولید کد ۵ رقمی
@@ -149,16 +182,15 @@ class RoleUser(models.Model):
         app_label = 'user'
 
 
-class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin, metaclass=DynamicFieldMeta):
+class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin,metaclass=DynamicFieldMeta):
     """
     Custom User Model
     """
     __dynamic_blank_fields__ = ['firstName', 'lastName', 'email', 'countryCode',
                               'gender', 'createAt', 'birthday', 'role', 'password']
 
-    # Required fields for custom user model
     USERNAME_FIELD = 'mobileNumber'
-    REQUIRED_FIELDS = ['firstName', 'lastName']
+    REQUIRED_FIELDS = ['firstName', 'lastName',]
 
     objects = UserManager()
 
@@ -190,48 +222,6 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin, metaclass=Dynam
         app_label = 'user'
 
 
-    def get_full_name(self):
-        """
-        Returns full name of the user.
-        If firstName and lastName are empty, returns mobileNumber as fallback.
-        """
-        full_name = f"{self.firstName or ''} {self.lastName or ''}".strip()
-        if not full_name:
-            return  "کاربر"
-        return full_name
-
-
-    def is_admin(self):
-        """
-        Checks if the user is an admin or superuser.
-        """
-        return self.role.slug == 'admin' or self.is_superuser
-
-    def set_password(self, raw_password):
-        """
-        Hashes and sets the password for the user.
-        """
-        from django.contrib.auth.hashers import make_password
-        self.password = make_password(raw_password)
-
-    def activate_user_info(self):
-        """
-        Activates user info if linked to UserSecret model.
-        """
-        if hasattr(self, 'usersecret'):
-            self.usersecret.isInfoFiled = True
-            self.usersecret.isActive = True
-            self.usersecret.save()
-
-    def deactivate(self):
-        """
-        Deactivates the user account if linked to UserSecret model.
-        """
-        if hasattr(self, 'usersecret'):
-            self.usersecret.isActive = False
-            self.usersecret.save()
-
-
 
 class UserSecret(AbstractBaseModel, models.Model):
     """User Secret Model"""
@@ -246,6 +236,31 @@ class UserSecret(AbstractBaseModel, models.Model):
     class Meta:
         db_table = 'user_secret'
         app_label = 'user'
+
+
+    def verify_otp(self, active_code):
+        """
+        Verify the OTP code against this user secret
+        Returns tuple: (is_valid: bool, error_message: str, status_code: int)
+        """
+        if self.isBan:
+            return False, "User is banned from verification.", status.HTTP_403_FORBIDDEN
+
+        if self.expireDate < timezone.now():
+            return False, "OTP code has expired.", status.HTTP_410_GONE
+
+        if self.activeCode != active_code:
+            return False, "Invalid OTP code.", status.HTTP_403_FORBIDDEN
+
+        return True, "OTP verified successfully.", status.HTTP_200_OK
+
+
+    def mark_as_verified(self):
+        """Mark this secret as verified"""
+        self.isVerfied = True
+        self.isActive = True
+        self.save()
+
 
 
 class UserLogin(models.Model):
