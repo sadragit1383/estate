@@ -49,6 +49,19 @@ class UserManager(BaseUserManager):
     Custom User Manager to handle creation and validation of users and superusers.
     """
 
+
+
+    def get_user(self, mobile_number):
+        """
+        Returns user instance for the given mobile number.
+        Raises ValueError if user not found.
+        """
+        try:
+            return self.model.objects.get(mobileNumber=mobile_number)
+        except self.model.DoesNotExist:
+            raise ValueError("کاربری با این شماره موبایل یافت نشد.")
+
+
     def create_user(self, mobile_number, password=None, **extra_fields):
         """
         Creates a regular user with given mobile number and optional password.
@@ -84,7 +97,6 @@ class UserManager(BaseUserManager):
         """
         Checks if a user with the given mobile number exists.
         """
-        UserValidator.validate_mobile_number(mobile_number)
         return self.model.objects.filter(mobileNumber=mobile_number).exists()
 
     def create_user_secret(self, user):
@@ -166,23 +178,28 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin, metaclass=Dynam
     birthday = models.CharField(max_length=20, verbose_name='تاریخ تولد')
     role = models.ForeignKey(RoleUser, verbose_name='نقش کاربر', on_delete=models.CASCADE)
     password = models.CharField(
-        max_length=36,
+        max_length=128,
         verbose_name='رمز عبور',
-        validators=[validate_password] 
+        validators=[validate_password]
     )
     is_superuser = models.BooleanField(default=False, verbose_name='کاربر ادمین پلاس')
-    is_staff = models.BooleanField(default=False, verbose_name='دسترسی ادمین')
-    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
 
     class Meta:
         db_table = 'user'
         app_label = 'user'
 
+
     def get_full_name(self):
         """
         Returns full name of the user.
+        If firstName and lastName are empty, returns mobileNumber as fallback.
         """
-        return f"{self.firstName} {self.lastName}".strip()
+        full_name = f"{self.firstName or ''} {self.lastName or ''}".strip()
+        if not full_name:
+            return  "کاربر"
+        return full_name
+
 
     def is_admin(self):
         """
@@ -215,11 +232,12 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin, metaclass=Dynam
             self.usersecret.save()
 
 
+
 class UserSecret(AbstractBaseModel, models.Model):
     """User Secret Model"""
     user = models.OneToOneField(User, verbose_name='کاربر', on_delete=models.CASCADE)
     isBan = models.BooleanField(default=False, verbose_name='وضعیت بلاک')
-    isVerfied = models.BooleanField(default=False)
+    isVerfied  = models.BooleanField(default=False)
     isInfoFiled = models.BooleanField(default=False)
     isActive = models.BooleanField(default=True)
     activeCode = models.CharField(max_length=5, verbose_name='کد تایید')

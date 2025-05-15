@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from models.user_model import User
-from serializers.user_serializer import SignupSerializer
-from models.user_model import UserManager
-import response_handler
+from ..models.user_model import User
+from ..serializers.user_serializer import SignupSerializer
+from ..models.user_model import UserManager
+from ..response_handler import ResponseHandler
 import utils
 
 
@@ -14,12 +14,12 @@ class RegisterOrLoginUserAPIView(APIView):
         mobile_number = request.data.get("mobile_number")
 
         if not mobile_number:
-            return response_handler.ResponseHandler.error(
+            return ResponseHandler.error(
                 message="شماره موبایل الزامی است.",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
-            
-        user_manager = UserManager()
+
+        user_manager = User.objects
         try:
             user_exists = user_manager.check_user(mobile_number)
 
@@ -41,7 +41,7 @@ class RegisterOrLoginUserAPIView(APIView):
             )
 
         except ValueError as exc:
-            return response_handler.ResponseHandler.error(
+            return ResponseHandler.error(
                 message=str(exc),
                 status_code=status.HTTP_400_BAD_REQUEST
             )
