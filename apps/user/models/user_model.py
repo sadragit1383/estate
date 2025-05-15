@@ -19,15 +19,15 @@ def validate_password(value):
 class UserValidator:
     """Validator class for User-related validations."""
     @staticmethod
-    def validate_mobile_number(mobile_number):
+    def validate_mobileNumber(mobileNumber):
         """
         Validate if a given mobile number matches required format.
         Raises ValueError if validation fails.
         """
-        if not mobile_number:
+        if not mobileNumber:
             raise ValueError("پارامتر شماره موبایل الزامی است.")
         try:
-            ValidMobileNumber(mobile_number)
+            ValidMobileNumber(mobileNumber)
         except ValidationError as exc:
             raise ValueError(f"شماره موبایل نامعتبر است: {str(exc)}")
 
@@ -52,26 +52,26 @@ class UserManager(BaseUserManager):
 
 
 
-    def get_user(self, mobile_number):
+    def get_user(self, mobileNumber):
         """
         Returns user instance for the given mobile number.
         Raises ValueError if user not found.
         """
         try:
-            return self.model.objects.get(mobileNumber=mobile_number)
+            return self.model.objects.get(mobileNumber=mobileNumber)
         except self.model.DoesNotExist:
             raise ValueError("کاربری با این شماره موبایل یافت نشد.")
 
 
-    def create_user(self, mobile_number, password=None, **extra_fields):
+    def create_user(self, mobileNumber, password=None, **extra_fields):
         """
         Creates a regular user with given mobile number and optional password.
         """
-        UserValidator.validate_mobile_number(mobile_number)
+        UserValidator.validate_mobileNumber(mobileNumber)
         if password:
             UserValidator.validate_password(password)
 
-        user = self.model(mobileNumber=mobile_number, **extra_fields)
+        user = self.model(mobileNumber=mobileNumber, **extra_fields)
         if password:
             user.set_password(password)
         else:
@@ -79,50 +79,73 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, mobile_number, password, **extra_fields):
+
+
+    def create_superuser(self, mobileNumber, password=None, **extra_fields):
         """
         Creates and saves a superuser with the given mobile number and password.
         """
-        extra_fields.setdefault('is_staff', True)
+        # Validate mobile number and password
+        UserValidator.validate_mobileNumber(mobileNumber)
+        if password:
+            UserValidator.validate_password(password)
+
+        # Set superuser defaults
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('is_staff', True)  # Important for admin access
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        # Ensure required fields are set
+        extra_fields.setdefault('firstName', 'Admin')
+        extra_fields.setdefault('lastName', 'User')
+        extra_fields.setdefault('email', f'{mobileNumber}@admin.com')
 
-        # Add explicit check for password as it's no longer optional in the signature
-        if not password:
-             raise ValueError('Superuser must have a password.')
+        # Get or create the admin role
+        role, created = RoleUser.objects.get_or_create(
+            slug='admin',
+            defaults={
+                'title': 'Administrator',
+                'isActive': True
+            }
+        )
+        extra_fields['role'] = role
 
-        # Call create_user with the now required password
-        return self.create_user(mobile_number, password, **extra_fields)
+        # Create the user - let Django handle the ID generation
+        user = self.model(
+            mobileNumber=mobileNumber,
+            **extra_fields
+        )
 
-        return self.create_user(mobile_number, password, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
 
-    def check_user(self, mobile_number):
+        user.save(using=self._db)
+        return user
+
+
+    def check_user(self, mobileNumber):
         """
         Checks if a user with the given mobile number exists.
         """
-        return self.model.objects.filter(mobileNumber=mobile_number).exists()
+        return self.model.objects.filter(mobileNumber=mobileNumber).exists()
 
 
 
-    def verify_user_otp(self, mobile_number, active_code):
+    def verify_user_otp(self, mobileNumber, active_code):
         """
         High-level OTP verification method
         Returns tuple: (user: User, error_message: str, status_code: int)
         """
         try:
-            user = self.get(mobileNumber=mobile_number)
+            user = self.get(mobileNumber=mobileNumber)
             user_secret = UserSecret.objects.get(user=user)
 
             is_valid, message, code = user_secret.verify_otp(active_code)
             if not is_valid:
                 return None, message, code
 
-            user_secret.mark_as_verified()
+            user_secret.user.activate_user_info()
             return user, message, code
 
         except User.DoesNotExist:
@@ -215,6 +238,7 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin
         validators=[validate_password]
     )
     is_superuser = models.BooleanField(default=False, verbose_name='کاربر ادمین پلاس')
+    is_staff = models.BooleanField(default=False, verbose_name='کاربر ادمین ')
 
 
     class Meta:
@@ -252,14 +276,11 @@ class UserSecret(AbstractBaseModel, models.Model):
         if self.activeCode != active_code:
             return False, "Invalid OTP code.", status.HTTP_403_FORBIDDEN
 
+        
         return True, "OTP verified successfully.", status.HTTP_200_OK
 
 
-    def mark_as_verified(self):
-        """Mark this secret as verified"""
-        self.isVerfied = True
-        self.isActive = True
-        self.save()
+
 
 
 

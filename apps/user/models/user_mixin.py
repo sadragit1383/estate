@@ -1,3 +1,4 @@
+
 class UserMethodsMixin:
     def get_full_name(self):
         full_name = f"{self.firstName or ''} {self.lastName or ''}".strip()
@@ -13,10 +14,17 @@ class UserMethodsMixin:
         self.password = make_password(raw_password)
 
     def activate_user_info(self):
-        if hasattr(self, 'usersecret'):
-            self.usersecret.isInfoFiled = True
-            self.usersecret.isActive = True
-            self.usersecret.save()
+        from ..models.user_model import UserSecret
+
+        """فعال‌سازی اطلاعات کاربر پس از تایید OTP"""
+        self.is_active = True
+        self.save()
+
+        # همچنین user_secret مربوطه را به‌روزرسانی کنید
+        user_secret = UserSecret.objects.get(user=self)
+        user_secret.isVerfied = True
+        user_secret.isActive = True
+        user_secret.save()
 
     def deactivate(self):
         if hasattr(self, 'usersecret'):

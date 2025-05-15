@@ -25,8 +25,8 @@ class Wallet(models.Model):
     userId = models.OneToOneField(User,on_delete=models.CASCADE,verbose_name='کاربر')
     isActive = models.BooleanField(default=True)
     createAt = models.DateTimeField(auto_now_add=True)
-    updateAt = models.BigIntegerField()
-    currency = models.ForeignKey(Currency,on_delete=models.CASCADE,verbose_name='نوع ارز')
+    updateAt = models.DateTimeField(auto_now=True)
+    currency = models.ForeignKey(Currency,on_delete=models.CASCADE,verbose_name='نوع ارز',blank=True,null=True)
 
     class Meta:
         db_table = 'user_wallet'

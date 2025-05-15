@@ -13,9 +13,9 @@ from ..models.validation.user_validation import ValidMobileNumber
 class RegisterOrLoginUserAPIView(APIView):
 
     def post(self, request):
-        mobile_number = request.data.get("mobile_number")
+        mobileNumber = request.data.get("mobileNumber")
 
-        if not mobile_number:
+        if not mobileNumber:
             return ResponseHandler.error(
                 message="شماره موبایل الزامی است.",
                 status_code=status.HTTP_400_BAD_REQUEST
@@ -23,12 +23,12 @@ class RegisterOrLoginUserAPIView(APIView):
 
         user_manager = User.objects
         try:
-            user_exists = user_manager.check_user(mobile_number)
+            user_exists = user_manager.check_user(mobileNumber)
 
             if user_exists:
-                user = user_manager.get_user(mobile_number)
+                user = user_manager.get_user(mobileNumber)
             else:
-                user = user_manager.create_user(mobile_number=mobile_number)
+                user = user_manager.create_user(mobileNumber=mobileNumber)
 
             user_secret = user_manager.create_user_secret(user)
 
