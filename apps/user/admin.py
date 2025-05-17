@@ -82,8 +82,8 @@ class CurrencyAdmin(admin.ModelAdmin):
 @admin.register(Wallet)
 class WalletAdmin(admin.ModelAdmin):
     """مدیریت کیف‌پول کاربران"""
-    list_display = ('userId', 'currency', 'balance', 'isActive', 'createAt')
-    search_fields = ('userId__mobileNumber', 'userId__firstName', 'userId__lastName')
+    list_display = ('user', 'currency', 'balance', 'isActive', 'createAt')
+    search_fields = ('user__mobileNumber', 'user__firstName', 'user__lastName')
     list_filter = ('isActive', 'currency')
     readonly_fields = ('uuid', 'createAt')
     ordering = ('-createAt',)

@@ -23,12 +23,13 @@ def activate_user_wallet(sender, instance, **kwargs):
             print(f"کیف پول برای {instance.user.mobileNumber} از قبل موجود است.")
 
 
+
 @receiver(pre_save, sender=UserSecret)
 def handle_user_ban_status(sender, instance, **kwargs):
     """
     سیگنال برای همگام‌سازی وضعیت بلاک بودن کاربر در تمام مدل‌های مرتبط
     """
-    if instance.pk:  
+    if instance.pk:
         try:
             old_instance = UserSecret.objects.get(pk=instance.pk)
 

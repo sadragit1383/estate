@@ -10,7 +10,7 @@ class Currency(models.Model):
     isActive = models.BooleanField(default=True)
     createAt = models.DateTimeField(auto_now_add=True)
     updateAt = models.DateTimeField(auto_now=True)
-    test_field = models.CharField(max_length=100, null=True, blank=True)  # ✅ اضافه شده
+    test_field = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         db_table = 'currency'
@@ -22,7 +22,7 @@ class Wallet(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     balance = models.BigIntegerField(default=0)
-    userId = models.OneToOneField(User,on_delete=models.CASCADE,verbose_name='کاربر')
+    user = models.OneToOneField(User,on_delete=models.CASCADE,verbose_name='کاربر')
     isActive = models.BooleanField(default=True)
     createAt = models.DateTimeField(auto_now_add=True)
     updateAt = models.DateTimeField(auto_now=True)

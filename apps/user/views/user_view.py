@@ -8,6 +8,7 @@ from ..response_handler import ResponseHandler
 from django.core.exceptions import ValidationError
 import utils
 from ..models.validation.user_validation import ValidMobileNumber
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 class RegisterOrLoginUserAPIView(APIView):
@@ -49,8 +50,6 @@ class RegisterOrLoginUserAPIView(APIView):
             )
 
 
-
-
 class OTPVerifyAPIView(APIView):
 
     def post(self, request):
@@ -90,11 +89,15 @@ class OTPVerifyAPIView(APIView):
                 status_code=status_code
             )
 
+        # Generate access token
+        access_token = AccessToken.for_user(user)
+
         # Successful verification
         return ResponseHandler.success(
             data={
                 "mobile": user.mobileNumber,
-                "name": user.get_full_name() or None
+                "name": user.get_full_name() or None,
+                "access_token": str(access_token)  # Add access token to response
             },
             message=message,
             status_code=status_code

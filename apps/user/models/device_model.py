@@ -3,7 +3,7 @@ from user_model import User
 
 class DeviceInfo(models.Model):
 
-    userId = models.ForeignKey(User,on_delete=models.CASCADE,verbose_name='کاربر')
+    user = models.ForeignKey(User,on_delete=models.CASCADE,verbose_name='کاربر')
     userAgent = models.CharField(max_length=255)
     platform = models.CharField(max_length=50)
     screenWidth = models.IntegerField()
