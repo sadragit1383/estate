@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'web.apps.user.middleware.userLog_middleware.ErrorLoggingMiddleware'
+    'apps.user.middleware.userLog_middleware.ErrorLoggingMiddleware'
 
 ]
 
