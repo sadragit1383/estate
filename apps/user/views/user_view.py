@@ -9,7 +9,11 @@ from django.core.exceptions import ValidationError
 import utils
 from ..models.validation.user_validation import ValidMobileNumber
 from rest_framework_simplejwt.tokens import AccessToken
+import utils
+from django.utils.decorators import method_decorator
 
+
+@method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
 
 class RegisterOrLoginUserAPIView(APIView):
 
@@ -49,6 +53,8 @@ class RegisterOrLoginUserAPIView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
+
+@method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
 
 class OTPVerifyAPIView(APIView):
 

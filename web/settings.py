@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 ]
 
 
+
 MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
@@ -65,8 +66,8 @@ MIDDLEWARE = [
 ]
 
 
-ROOT_URLCONF = 'web.urls'
 
+ROOT_URLCONF = 'web.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

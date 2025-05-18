@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models.user_model import User, RoleUser, UserSecret, UserLogin
 from .models.wallet_model import Currency, Wallet
+from apps.user.models.loguser_model import UserLog, BlockedIP, RequestLog
 
 
 @admin.register(User)
@@ -87,3 +88,29 @@ class WalletAdmin(admin.ModelAdmin):
     list_filter = ('isActive', 'currency')
     readonly_fields = ('uuid', 'createAt')
     ordering = ('-createAt',)
+
+
+
+
+@admin.register(UserLog)
+class UserLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'code', 'endpoint', 'count', 'ipAddress')
+    search_fields = ('user__username', 'code', 'endpoint', 'ipAddress')
+    list_filter = ('code',)
+    readonly_fields = ('user', 'code', 'endpoint', 'message', 'ipAddress', 'count')
+    ordering = ('-count',)
+
+@admin.register(BlockedIP)
+class BlockedIPAdmin(admin.ModelAdmin):
+    list_display = ('ip_address', 'blocked_at', 'is_active', 'requests_count', 'max_requests', 'time_frame_seconds')
+    search_fields = ('ip_address',)
+    list_filter = ('is_active',)
+    readonly_fields = ('blocked_at',)
+    ordering = ('-blocked_at',)
+
+@admin.register(RequestLog)
+class RequestLogAdmin(admin.ModelAdmin):
+    list_display = ('ip_address', 'timestamp')
+    search_fields = ('ip_address',)
+    list_filter = ('timestamp',)
+    ordering = ('-timestamp',)
