@@ -11,7 +11,7 @@ def activate_user_wallet(sender, instance, **kwargs):
     """
     if instance.isActive and instance.isVerfied:
         wallet, created = Wallet.objects.get_or_create(
-            userId=instance.user,
+            user=instance.user,
             defaults={
                 'balance': 0,
                 'currency': Currency.objects.filter(isActive=True).first()
@@ -41,7 +41,7 @@ def handle_user_ban_status(sender, instance, **kwargs):
                 instance.isActive = not is_banned
                 instance.isVerfied = not is_banned
 
-                Wallet.objects.filter(userId=user).update(isActive=not is_banned)
+                Wallet.objects.filter(user=user).update(isActive=not is_banned)
 
         except UserSecret.DoesNotExist:
             pass

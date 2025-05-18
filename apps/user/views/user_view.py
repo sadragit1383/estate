@@ -8,9 +8,9 @@ from ..response_handler import ResponseHandler
 from django.core.exceptions import ValidationError
 import utils
 from ..models.validation.user_validation import ValidMobileNumber
-from rest_framework_simplejwt.tokens import AccessToken
 import utils
 from django.utils.decorators import method_decorator
+from ..models.accessToken.token_service_factory import TokenServiceFactory
 
 
 @method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
@@ -96,15 +96,19 @@ class OTPVerifyAPIView(APIView):
             )
 
         # Generate access token
-        access_token = AccessToken.for_user(user)
+        token_service = TokenServiceFactory.get_service()
+        access_token = token_service.generate_access_token(user)
 
         # Successful verification
+        response_data = {
+    'mobileNumber': user.mobileNumber,
+    'firstName': user.get_full_name() or None,
+    'access_token': str(access_token)
+        }
+        
         return ResponseHandler.success(
-            data={
-                "mobile": user.mobileNumber,
-                "name": user.get_full_name() or None,
-                "access_token": str(access_token)  # Add access token to response
-            },
+            data=response_data,
             message=message,
             status_code=status_code
         )
+
