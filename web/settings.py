@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'rest_framework_simplejwt',
     'apps.user.apps.UserConfig',
+    'apps.core.apps.CoreConfig',
 ]
 
 

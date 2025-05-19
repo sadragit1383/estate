@@ -14,7 +14,6 @@ from ..models.accessToken.token_service_factory import TokenServiceFactory
 
 
 @method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
-
 class RegisterOrLoginUserAPIView(APIView):
 
     def post(self, request):
@@ -103,7 +102,7 @@ class OTPVerifyAPIView(APIView):
         response_data = {
     'mobileNumber': user.mobileNumber,
     'firstName': user.get_full_name() or None,
-    'access_token': str(access_token)
+    'accessToken': str(access_token)
         }
 
         return ResponseHandler.success(
@@ -132,6 +131,9 @@ class AdminLoginAPIView(APIView):
 
         return Response({
             "message": "ادمین با موفقیت وارد پنل شد.",
-            "access": access_token,
+            "accessToken": access_token,
             "fullName": user.get_full_name(),
         }, status=status.HTTP_200_OK)
+
+
+
