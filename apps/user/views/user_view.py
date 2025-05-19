@@ -105,10 +105,33 @@ class OTPVerifyAPIView(APIView):
     'firstName': user.get_full_name() or None,
     'access_token': str(access_token)
         }
-        
+
         return ResponseHandler.success(
             data=response_data,
             message=message,
             status_code=status_code
         )
 
+
+class AdminLoginAPIView(APIView):
+    def post(self, request):
+        mobile_number = request.data.get("mobileNumber")
+        password = request.data.get("password")
+
+        # استفاده از متد سفارشی loginAdmin
+        user_manager = User.objects  # فرض بر این است که loginAdmin روی model manager تعریف شده است
+        result = user_manager.loginAdmin(mobile_number, password)
+
+        if result is not True:
+            return result
+
+        user = user_manager.get_user(mobileNumber=mobile_number)
+
+        token_service = TokenServiceFactory.get_service()
+        access_token = token_service.generate_access_token(user)
+
+        return Response({
+            "message": "ادمین با موفقیت وارد پنل شد.",
+            "access": access_token,
+            "fullName": user.get_full_name(),
+        }, status=status.HTTP_200_OK)

@@ -10,6 +10,8 @@ from .validation.user_validation import CleanFieldsMixin, ValidMobileNumber, Pas
 from .abstract_model import AbstractBaseModel
 from .user_mixin import UserMethodsMixin
 from rest_framework import status
+from ..response_handler import ResponseHandler
+
 
 def validate_password(value):
     validator = PasswordValidator()
@@ -31,6 +33,7 @@ class UserValidator:
         except ValidationError as exc:
             raise ValueError(f"شماره موبایل نامعتبر است: {str(exc)}")
 
+
     @staticmethod
     def validate_password(password):
         """
@@ -40,16 +43,20 @@ class UserValidator:
         if not password:
             raise ValueError("رمز عبور الزامی است.")
         try:
-            PasswordValidator(password)
+            # The PasswordValidator class needs to be callable with the password directly
+            # or have a method like .validate(password). Assuming it's callable.
+            # If it expects an instance to be called, then `validator = PasswordValidator()` then `validator(password)`.
+            # Based on `validate_password` function, it's callable.
+            PasswordValidator()(password) # Call the instance
         except ValidationError as exc:
             raise ValueError(f"رمز عبور نامعتبر است: {str(exc)}")
+
 
 
 class UserManager(BaseUserManager):
     """
     Custom User Manager to handle creation and validation of users and superusers.
     """
-
 
 
     def get_user(self, mobileNumber):
@@ -186,6 +193,42 @@ class UserManager(BaseUserManager):
             raise ValueError("اطلاعات تایید کاربر یافت نشد.")
 
 
+    def loginAdmin(self, mobileNumber, password):
+        """
+        Authenticates an admin user with the given mobile number and password.
+        Returns True on successful login, or a ResponseHandler.error on failure.
+        """
+        # 1. Basic input validation
+        if not mobileNumber or not password:
+            return ResponseHandler.error(
+                code=status.HTTP_400_BAD_REQUEST,
+                message='شماره موبایل و رمز عبور الزامی هستند.',
+            )
+
+        try:
+            user = self.get(mobileNumber=mobileNumber)
+        except self.model.DoesNotExist:
+            return ResponseHandler.error(
+                code=status.HTTP_404_NOT_FOUND,
+                message='کاربر مورد نظر در سیستم موجود نیست.',
+            )
+
+        if not user.is_staff and not user.is_superuser:
+            return ResponseHandler.error(
+                code=status.HTTP_403_FORBIDDEN,  
+                message='شما اجازه دسترسی به پنل مدیریت را ندارید.',
+            )
+
+        if not user.check_password(password):
+            return ResponseHandler.error(
+                code=status.HTTP_400_BAD_REQUEST,
+                message='رمز عبور اشتباه است.',
+
+            )
+
+        return True
+
+
 class Gender(models.TextChoices):
     """Gender Choices"""
     MALE = 'male', 'مرد'
@@ -210,7 +253,7 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin
     Custom User Model
     """
     __dynamic_blank_fields__ = ['firstName', 'lastName', 'email', 'countryCode',
-                              'gender', 'createAt', 'birthday', 'role', 'password']
+                                  'gender', 'createAt', 'birthday', 'role', 'password']
 
     USERNAME_FIELD = 'mobileNumber'
     REQUIRED_FIELDS = ['firstName', 'lastName',]
@@ -246,7 +289,6 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin
         app_label = 'user'
 
 
-
 class UserSecret(AbstractBaseModel, models.Model):
     """User Secret Model"""
     user = models.OneToOneField(User, verbose_name='کاربر', on_delete=models.CASCADE)
@@ -276,12 +318,8 @@ class UserSecret(AbstractBaseModel, models.Model):
         if self.activeCode != active_code:
             return False, "Invalid OTP code.", status.HTTP_403_FORBIDDEN
 
-        
+
         return True, "OTP verified successfully.", status.HTTP_200_OK
-
-
-
-
 
 
 class UserLogin(models.Model):
