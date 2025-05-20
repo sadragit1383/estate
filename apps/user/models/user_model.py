@@ -215,7 +215,7 @@ class UserManager(BaseUserManager):
 
         if not user.is_staff and not user.is_superuser:
             return ResponseHandler.error(
-                code=status.HTTP_403_FORBIDDEN,  
+                code=status.HTTP_403_FORBIDDEN,
                 message='شما اجازه دسترسی به پنل مدیریت را ندارید.',
             )
 

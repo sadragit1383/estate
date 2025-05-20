@@ -1,5 +1,6 @@
 
 from django.db import models
+from apps.user.models.user_model import User
 import uuid
 
 class Country(models.Model):
@@ -54,3 +55,16 @@ class Area(models.Model):
     def __str__(self):
         return self.name
 
+
+
+class UserLocation(models.Model):
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,verbose_name='کاربر')
+    city = models.ForeignKey(City,on_delete=models.CASCADE,verbose_name='شهر')
+    area = models.ForeignKey(Area,on_delete=models.CASCADE,verbose_name='منطقه')
+    createAt = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updateAt = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+
+    def __str__(self):
+        return f'{self.user.firstName}\t{self.area}'

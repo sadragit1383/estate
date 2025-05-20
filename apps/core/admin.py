@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models.location_model import Country, Province, City, Area
+from .models.location_model import Country, Province, City, Area,UserLocation
 
 class ProvinceInline(admin.TabularInline):
     model = Province
@@ -76,3 +76,18 @@ class AreaAdmin(admin.ModelAdmin):
     def country(self, obj):
         return obj.city.province.country
     country.short_description = 'کشور'
+
+
+
+
+
+@admin.register(UserLocation)
+class UserLocationAdmin(admin.ModelAdmin):
+    list_display = ('user_full_name', 'city', 'area', 'createAt', 'updateAt')
+    list_filter = ('city', 'area', 'createAt')
+    search_fields = ('user__firstName', 'user__lastName', 'area__name', 'city__name')
+    ordering = ('-createAt',)
+
+    def user_full_name(self, obj):
+        return f"{obj.user.firstName} {obj.user.lastName}"
+    user_full_name.short_description = 'نام کاربر'
