@@ -17,7 +17,6 @@ class UserMethodsMixin:
         from ..models.user_model import UserSecret
 
         """فعال‌سازی اطلاعات کاربر پس از تایید OTP"""
-        self.is_active = True
         self.save()
 
         # همچنین user_secret مربوطه را به‌روزرسانی کنید

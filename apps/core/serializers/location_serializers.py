@@ -23,10 +23,9 @@ class AreaSerializer(serializers.ModelSerializer):
 
 
 
-
 class UserLocationSerializer(serializers.ModelSerializer):
-    city = serializers.IntegerField(write_only=True)
-    area = serializers.IntegerField(write_only=True)
+    city = serializers.UUIDField(write_only=True)  # تغییر از IntegerField به UUIDField
+    area = serializers.UUIDField(write_only=True)  # تغییر از IntegerField به UUIDField
 
     class Meta:
         model = UserLocation
@@ -41,7 +40,7 @@ class UserLocationSerializer(serializers.ModelSerializer):
         except Area.DoesNotExist:
             raise serializers.ValidationError("محله انتخاب‌شده وجود ندارد.")
 
-        if area.city.id != city_id:
+        if str(area.city.id) != str(city_id):  # تبدیل به رشته برای مقایسه صحیح UUID
             raise serializers.ValidationError("محله به شهر انتخاب‌شده تعلق ندارد.")
 
         return data

@@ -289,6 +289,12 @@ class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin
         app_label = 'user'
 
 
+    @property
+    def is_active(self):
+        """برای سازگاری با JWT"""
+        return True
+
+
 class UserSecret(AbstractBaseModel, models.Model):
     """User Secret Model"""
     user = models.OneToOneField(User, verbose_name='کاربر', on_delete=models.CASCADE)
