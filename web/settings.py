@@ -93,14 +93,16 @@ CORS_ALLOW_CREDENTIALS = True
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'user_app',
-        'USER': 'user_app',
-        'PASSWORD': '123456789987654321',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('POSTGRES_DB', 'user_app'),
+        'USER': os.getenv('POSTGRES_USER', 'user_app'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123456789987654321'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db'),  # تغییر از localhost به db
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
         'OPTIONS': {
             'options': '-c search_path=public',
         },
@@ -153,7 +155,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 4,
 

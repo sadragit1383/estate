@@ -4,7 +4,7 @@ from ..serializers.location_serializers import CountrySerializer, ProvinceSerial
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 from rest_framework.response import Response
-from ..serializers.authentication import CustomJWTAuthentication
+from ..authentication.accesstoken.authentication import CustomJWTAuthentication
 
 class CountryListView(generics.ListAPIView):
 

@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                 ('balance', models.BigIntegerField(default=0)),
                 ('isActive', models.BooleanField(default=True)),
                 ('createAt', models.DateTimeField(auto_now_add=True)),
-                ('updateAt', models.BigIntegerField()),
+                ('updateAt', models.DateTimeField(auto_now=True)),
                 ('currency', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.currency', verbose_name='نوع ارز')),
                 ('userId', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='کاربر')),
             ],

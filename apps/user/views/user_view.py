@@ -10,7 +10,11 @@ import utils
 from ..models.validation.user_validation import ValidMobileNumber
 import utils
 from django.utils.decorators import method_decorator
-from ..models.accessToken.token_service_factory import TokenServiceFactory
+from apps.core.authentication.accesstoken.token_service_factory import TokenServiceFactory
+from apps.core.authentication.accesstoken.authentication import CustomJWTAuthentication
+from rest_framework import status, permissions
+from ..serializers.user_serializer import ProfileUpdateSerializer,GetUserSerializer
+from ..service.profile_service import ProfileUpdater
 
 
 @method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
@@ -137,3 +141,32 @@ class AdminLoginAPIView(APIView):
 
 
 
+
+class ProfileUpdateView(APIView):
+
+    authentication_classes = [CustomJWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        serializer = ProfileUpdateSerializer(data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        service = ProfileUpdater(user=request.user, data=serializer.validated_data)
+        success, message = service.update_profile()
+
+        if success:
+            return Response({'message': message}, status=status.HTTP_200_OK)
+        return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class GetUserAPIView(APIView):
+
+    authentication_classes = [CustomJWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = GetUserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

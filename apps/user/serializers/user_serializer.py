@@ -14,3 +14,19 @@ class SignupSerializer(serializers.ModelSerializer):
             mobile_number=validated_data['mobile_number'],
             password=validated_data['password']
         )
+
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['firstName', 'lastName', 'email']
+
+
+
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['firstName', 'lastName', 'email','mobileNumber','gender','birthday']
+
+        
