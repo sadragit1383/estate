@@ -116,31 +116,6 @@ class OTPVerifyAPIView(APIView):
         )
 
 
-class AdminLoginAPIView(APIView):
-    def post(self, request):
-        mobile_number = request.data.get("mobileNumber")
-        password = request.data.get("password")
-
-        # استفاده از متد سفارشی loginAdmin
-        user_manager = User.objects  # فرض بر این است که loginAdmin روی model manager تعریف شده است
-        result = user_manager.loginAdmin(mobile_number, password)
-
-        if result is not True:
-            return result
-
-        user = user_manager.get_user(mobileNumber=mobile_number)
-
-        token_service = TokenServiceFactory.get_service()
-        access_token = token_service.generate_access_token(user)
-
-        return Response({
-            "message": "ادمین با موفقیت وارد پنل شد.",
-            "accessToken": access_token,
-            "fullName": user.get_full_name(),
-        }, status=status.HTTP_200_OK)
-
-
-
 
 class ProfileUpdateView(APIView):
 
@@ -158,6 +133,8 @@ class ProfileUpdateView(APIView):
         if success:
             return Response({'message': message}, status=status.HTTP_200_OK)
         return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
