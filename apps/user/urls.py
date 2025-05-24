@@ -1,6 +1,7 @@
 from django.urls import path
 from .views.user_view import GetUserAPIView,ProfileUpdateView,RegisterOrLoginUserAPIView,OTPVerifyAPIView
 from .views.admin_view import ChangePasswordAdmin,AdminLoginAPIView,SigninAdminAPIView
+from .views.useage_view import UserStatusView
 
 urlpatterns = [
 
@@ -11,5 +12,6 @@ urlpatterns = [
    path('getuser',GetUserAPIView.as_view()),
    path('createadmin',SigninAdminAPIView.as_view()),
    path('changepasswordadmin',ChangePasswordAdmin.as_view()),
+   path('userusage', UserStatusView.as_view(), name='user-usage'),
 
 ]

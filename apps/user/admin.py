@@ -114,3 +114,21 @@ class RequestLogAdmin(admin.ModelAdmin):
     search_fields = ('ip_address',)
     list_filter = ('timestamp',)
     ordering = ('-timestamp',)
+
+
+
+
+from django.contrib import admin
+from .models.useage_model import UserUseage
+
+@admin.register(UserUseage)
+class UserUseageAdmin(admin.ModelAdmin):
+    list_display = ('user', 'startTime', 'endTime', 'status', 'result')  # ستون‌هایی که نمایش داده میشن
+    list_filter = ('status', 'startTime', 'endTime')  # فیلتر بر اساس وضعیت و زمان‌ها
+    search_fields = ('user__username', 'result')  # امکان جستجو بر اساس نام کاربری و نتیجه
+    readonly_fields = ('result',)  # نتیجه رو readonly می‌کنیم چون خودکار محاسبه میشه
+    ordering = ('-startTime',)  # مرتب سازی بر اساس زمان شروع به صورت نزولی
+
+    def save_model(self, request, obj, form, change):
+        # اگر بخوای میتونی اینجا کدهای اضافی برای ذخیره اضافه کنی
+        super().save_model(request, obj, form, change)
