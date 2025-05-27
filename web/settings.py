@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'apps.user.apps.UserConfig',
     'apps.core.apps.CoreConfig',
+    'apps.agency.apps.AgencyConfig'
 ]
 
 

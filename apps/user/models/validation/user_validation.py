@@ -14,10 +14,11 @@ def ValidMobileNumber(value):
 class CleanFieldsMixin:
 
     def clean(self):
+
         super().clean()
         for field in self._meta.fields:
             value = getattr(self, field.name)
-
+            print("🧼 CLEAN METHOD CALLED!")
             if isinstance(field, (models.CharField, models.TextField)):
                 if value:
                     # Strip dangerous patterns (rudimentary SQLi protection)
@@ -27,7 +28,7 @@ class CleanFieldsMixin:
                     # You may also strip HTML tags, emojis, etc., if needed
                     setattr(self, field.name, value.strip())
 
-                    
+
 class PasswordValidator:
 
     def __init__(self, min_length=8, require_upper=True, require_lower=True, require_digit=True, require_special=True, disallow_whitespace=True):

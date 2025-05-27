@@ -216,7 +216,7 @@ class UserManager(BaseUserManager):
         if not user.is_staff and not user.is_superuser:
             return ResponseHandler.error(
                 code=status.HTTP_403_FORBIDDEN,
-                message='شما اجازه دسترسی به پنل مدیریت را ندارید.',
+                message='شما اجازه دستشرسی به پنل مدیریت را ندارید.',
             )
 
         if not user.check_password(password):
@@ -234,6 +234,13 @@ class Gender(models.TextChoices):
     MALE = 'male', 'مرد'
     FEMALE = 'femail', 'زن'
     OTHER = 'other', 'سایر'
+
+class SubjectBan(models.TextChoices):
+
+    """Gender Choices"""
+    AGENCY = 'agency', 'اژانس'
+    EDVERTISEMENT = 'advertisement', 'اگهی'
+    MANAGER = 'manager', 'مدیر'
 
 
 class RoleUser(models.Model):
@@ -326,6 +333,23 @@ class UserSecret(AbstractBaseModel, models.Model):
 
 
         return True, "OTP verified successfully.", status.HTTP_200_OK
+
+
+
+class banUsers(models.Model):
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,verbose_name='کاربر')
+    text = models.TextField(verbose_name='توضیحات')
+
+    banSubject = models.CharField(
+            max_length=100, choices=SubjectBan.choices,verbose_name="نوع رد"
+        )
+    isCheck = models.BooleanField(default=False,verbose_name='چک شده')
+
+
+    def __str__(self):
+        return f'{self.user.lastName}\t\t{self.text}'
+
 
 
 class UserLogin(models.Model):

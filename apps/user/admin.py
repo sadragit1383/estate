@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models.user_model import User, RoleUser, UserSecret, UserLogin
+from .models.user_model import banUsers,User, RoleUser, UserSecret, UserLogin
 from .models.wallet_model import Currency, Wallet
+from .models.useage_model import UserUseage
 from apps.user.models.loguser_model import UserLog, BlockedIP, RequestLog
 
 
@@ -117,10 +118,6 @@ class RequestLogAdmin(admin.ModelAdmin):
 
 
 
-
-from django.contrib import admin
-from .models.useage_model import UserUseage
-
 @admin.register(UserUseage)
 class UserUseageAdmin(admin.ModelAdmin):
     list_display = ('user', 'startTime', 'endTime', 'status', 'result')  # ستون‌هایی که نمایش داده میشن
@@ -132,3 +129,11 @@ class UserUseageAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         # اگر بخوای میتونی اینجا کدهای اضافی برای ذخیره اضافه کنی
         super().save_model(request, obj, form, change)
+
+
+
+@admin.register(banUsers)
+class UserUseageAdmin(admin.ModelAdmin):
+
+    list_display = ('user', 'banSubject', 'isCheck',)  # ستون‌هایی که نمایش داده میشن
+
