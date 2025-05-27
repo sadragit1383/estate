@@ -4,6 +4,7 @@ from apps.user.models.user_model import User,banUsers
 from apps.core.models.location_model import Province, City
 from apps.user.models.meta.meta_class import DynamicFieldMeta
 from apps.user.models.validation.user_validation import CleanFieldsMixin
+from .validation.agency_valid import validate_name,simple_image_validator,create_image_validator
 
 # ================== Ban Section ==================
 
@@ -41,12 +42,12 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
     __dynamic_blank_fields__ = ['timeWork', 'bio', 'email', 'banner_image', 'bannerImage', 'logoImage']
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,validators=[validate_name])
 
-    profileImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True)
-    bannerImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True)
-    logoImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True)
-    licenceImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True)
+    profileImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
+    bannerImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
+    logoImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
+    licenceImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
 
     email = models.EmailField(verbose_name='ایمیل املاک', blank=True, null=True)
     address = models.TextField(verbose_name='آدرس')

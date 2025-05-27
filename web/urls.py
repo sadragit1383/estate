@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf.urls.static import static
+import web.settings as sett
 
 urlpatterns = [
 
@@ -29,4 +31,4 @@ urlpatterns = [
     #=====================================================
     path('',include('apps.core.urls')),
 
-]
+]+static(sett.MEDIA_URL,document_root = sett.MEDIA_ROOT)
