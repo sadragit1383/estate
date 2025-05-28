@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from apps.agency.models import Agency
-from apps.user.models import User
+from ..models import Agency
+from apps.user.models.user_model import User
 
 class AgencyCreateSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
@@ -19,3 +19,4 @@ class AgencyCreateSerializer(serializers.ModelSerializer):
             'bannerImage': {'required': False},
             'logoImage': {'required': False},
         }
+

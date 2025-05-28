@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from .models.agency_model import Agency, Consultant, Manager
+from .models.requestagency_model import RequestCollaborationAgency,StatusResponse, Role
+from django.utils.html import format_html
+
+
 
 class CityInline(admin.TabularInline):
     model = Agency.cities.through
@@ -64,3 +68,64 @@ class ManagerAdmin(StaffAdmin):
     pass
 
 admin.site.register(Agency, AgencyAdmin)
+
+
+
+@admin.register(RequestCollaborationAgency)
+class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
+    list_display = (
+        'user_full_name',
+        'agency_name',
+        'role',
+        'status_colored',
+        'isActive',
+        'created_at',
+    )
+    list_filter = ('status', 'role', 'isActive', 'created_at')
+    search_fields = ('user__first_name', 'user__last_name', 'agency__name', 'request_message')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+    list_per_page = 25
+
+    def user_full_name(self, obj):
+        return obj.user.get_full_name()
+    user_full_name.short_description = 'نام کاربر'
+
+    def agency_name(self, obj):
+        return obj.agency.name
+    agency_name.short_description = 'نام آژانس'
+
+    def status_colored(self, obj):
+        color_map = {
+            StatusResponse.PENDING: 'orange',
+            StatusResponse.ACCEPTED: 'green',
+            StatusResponse.REJECTED: 'red',
+            StatusResponse.CANCELLED: 'gray',
+        }
+        color = color_map.get(obj.status, 'black')
+        return format_html('<span style="color: {};">{}</span>', color, obj.get_status_display())
+    status_colored.short_description = 'وضعیت'
+
+    fieldsets = (
+        (None, {
+            'fields': (
+                'agency',
+                'user',
+                'role',
+                'status',
+                'isActive',
+            )
+        }),
+        ('پیام‌ها', {
+            'fields': (
+                'request_message',
+                'response_message',
+            )
+        }),
+        ('تاریخ‌ها', {
+            'fields': (
+                'created_at',
+                'updated_at',
+            )
+        }),
+    )

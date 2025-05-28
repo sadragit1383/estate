@@ -4,7 +4,7 @@ from apps.user.models.user_model import User,banUsers
 from apps.core.models.location_model import Province, City
 from apps.user.models.meta.meta_class import DynamicFieldMeta
 from apps.user.models.validation.user_validation import CleanFieldsMixin
-from .validation.agency_valid import validate_name,simple_image_validator,create_image_validator
+from .validation.agency_valid import *
 
 # ================== Ban Section ==================
 
@@ -44,10 +44,10 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     name = models.CharField(max_length=255,validators=[validate_name])
 
-    profileImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
-    bannerImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
-    logoImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
-    licenceImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[create_image_validator(400,['png','jpg'])])
+    profileImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
+    bannerImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
+    logoImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
+    licenceImage = models.ImageField(upload_to=agency_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
 
     email = models.EmailField(verbose_name='ایمیل املاک', blank=True, null=True)
     address = models.TextField(verbose_name='آدرس')
@@ -89,7 +89,7 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
 
 class StaffBase(TimestampedModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    profile_image = models.ImageField(upload_to=profile_uploader.upload_to, null=True, blank=True)
+    profile_image = models.ImageField(upload_to=profile_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
     agency = models.ForeignKey(Agency, on_delete=models.CASCADE, related_name='%(class)ss')
 
     class Meta:
