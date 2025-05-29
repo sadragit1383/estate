@@ -27,12 +27,12 @@ class CollaborationResponseSerializer(serializers.Serializer):
     سریالایزر برای پاسخ دادن به درخواست همکاری
     """
     id = serializers.UUIDField(required=True, help_text="شناسه درخواست همکاری")
-    response_type = serializers.ChoiceField(
+    responseType = serializers.ChoiceField(
         choices=['accepted', 'rejected'],
         required=True,
         help_text="نوع پاسخ: accepted یا rejected"
     )
-    response_message = serializers.CharField(
+    responseMessage = serializers.CharField(
         max_length=1000,
         required=False,
         allow_blank=True,

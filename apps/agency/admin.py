@@ -119,7 +119,7 @@ class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
         ('پیام‌ها', {
             'fields': (
                 'request_message',
-                'response_message',
+                'responseMessage',
             )
         }),
         ('تاریخ‌ها', {

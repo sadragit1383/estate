@@ -5,7 +5,7 @@ from apps.core.models.location_model import Province, City
 from apps.user.models.meta.meta_class import DynamicFieldMeta
 from apps.user.models.validation.user_validation import CleanFieldsMixin
 from .validation.agency_valid import *
-
+from django.http import JsonResponse
 # ================== Ban Section ==================
 
 class SubjectBan(models.TextChoices):
@@ -84,13 +84,50 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
             banSubject=SubjectBan.AGENCY
         )
 
+    def deactivate_member(self, user_id):
 
-# ================== Staff Base ==================
+       
+
+        from .requestagency_model import RequestCollaborationAgency, StatusResponse
+
+        updated = False
+
+        # غیرفعال‌سازی اگر مشاور بود
+        consultant_qs = self.consultants.filter(user_id=user_id, isActive=True)
+        if consultant_qs.exists():
+            consultant_qs.update(isActive=False)
+            updated = True
+
+        # غیرفعال‌سازی اگر مدیر بود
+        manager_qs = self.managers.filter(user_id=user_id, isActive=True)
+        if manager_qs.exists():
+            manager_qs.update(isActive=False)
+            updated = True
+
+        if not updated:
+            raise ValidationError("کاربر فعال با این آژانس یافت نشد.")
+
+        # لغو درخواست‌های همکاری مرتبط با آژانس و کاربر
+        RequestCollaborationAgency.objects.filter(
+            agency=self,
+            user_id=user_id,
+            status=StatusResponse.ACCEPTED,
+            isActive=True
+        ).update(
+            status=StatusResponse.CANCELLED,
+            isActive=False,
+            responseMessage="درخواست به دلیل غیرفعال‌سازی از سوی آژانس لغو شد."
+        )
+
+
+
+    # ================== Staff Base ==================
 
 class StaffBase(TimestampedModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     profile_image = models.ImageField(upload_to=profile_uploader.upload_to, null=True, blank=True,validators=[profile_image_validator],)
     agency = models.ForeignKey(Agency, on_delete=models.CASCADE, related_name='%(class)ss')
+    isActive = models.BooleanField(default=False,verbose_name='وضعیت فعال')
 
     class Meta:
         abstract = True

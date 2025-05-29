@@ -5,6 +5,7 @@ import uuid
 from apps.user.models.user_model import User
 from .agency_model import Agency
 from apps.user.models.validation.user_validation import CleanFieldsMixin
+from .agency_model import Consultant,Manager
 
 
 class Role(models.TextChoices):
@@ -67,7 +68,7 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
         verbose_name='پیام درخواست'
     )
 
-    response_message = models.TextField(
+    responseMessage = models.TextField(
         blank=True,
         null=True,
         verbose_name='پاسخ آژانس'
@@ -90,8 +91,6 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
 
     class Meta:
         db_table = 'agency_collaboration_requests'
-
-        unique_together = ['agency', 'user']
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['agency', 'user']),
@@ -102,47 +101,71 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
     def __str__(self):
         return f'درخواست {self.user.get_full_name()} برای آژانس {self.agency.name}'
 
+
     def clean(self):
         super().clean()
 
         if self.agency.user == self.user:
             raise ValidationError("کاربر نمی‌تواند با آژانس خود درخواست همکاری دهد")
 
-        if RequestCollaborationAgency.objects.filter(
+        existing_request = RequestCollaborationAgency.objects.filter(
             agency=self.agency,
             user=self.user
-        ).exclude(pk=self.pk).exists():
-            raise ValidationError("درخواست برای این کاربر و آژانس قبلاً ثبت شده است")
+        ).exclude(pk=self.pk).order_by('-created_at').first()
+
+        if existing_request and existing_request.status in ['accepted', 'rejected','pending']:
+            raise ValidationError("درخواست برای این کاربر و آژانس قبلاً ثبت و بررسی شده است")
 
 
-    def accept(self, response_message=None):
-        """
-        تایید درخواست همکاری
-        """
+
+
+    def accept(self, responseMessage=None):
+
+        from ..models.requestagency_model import Role, StatusResponse
+
         self.status = StatusResponse.ACCEPTED
         self.isActive = True
-        if response_message:
-            self.response_message = response_message
+        if responseMessage:
+            self.responseMessage = responseMessage
+
+        Manager.objects.filter(user=self.user, agency=self.agency).delete()
+        Consultant.objects.filter(user=self.user, agency=self.agency).delete()
+
+        # ثبت کاربر در نقش جدید
+        if self.role == Role.MANAGER:
+            Manager.objects.create(
+                user=self.user,
+                agency=self.agency,
+                isActive=True
+            )
+        elif self.role == Role.CONSULTANT:
+            Consultant.objects.create(
+                user=self.user,
+                agency=self.agency,
+                isActive=True
+            )
+
         self.save()
 
-    def reject(self, response_message=None):
+
+    def reject(self, responseMessage=None):
         """
         رد درخواست همکاری
         """
         self.status = StatusResponse.REJECTED
         self.isActive = False
-        if response_message:
-            self.response_message = response_message
+        if responseMessage:
+            self.responseMessage = responseMessage
         self.save()
 
-    def cancel(self, response_message=None):
+    def cancel(self, responseMessage=None):
         """
         لغو درخواست همکاری
         """
         self.status = StatusResponse.CANCELLED
         self.isActive = False
-        if response_message:
-            self.response_message = response_message
+        if responseMessage:
+            self.responseMessage = responseMessage
         self.save()
 
     @property

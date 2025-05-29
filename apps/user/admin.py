@@ -11,7 +11,7 @@ from apps.user.models.loguser_model import UserLog, BlockedIP, RequestLog
 class UserAdmin(BaseUserAdmin):
     """مدیریت حرفه‌ای کاربر در پنل ادمین"""
 
-    list_display = ('mobileNumber', 'firstName', 'lastName', 'email', 'is_superuser', 'is_staff')
+    list_display = ('id','mobileNumber', 'firstName', 'lastName', 'email', 'is_superuser', 'is_staff')
     list_filter = ('is_superuser', 'gender', 'role')
     search_fields = ('mobileNumber', 'firstName', 'lastName', 'email')
     ordering = ('-id',)

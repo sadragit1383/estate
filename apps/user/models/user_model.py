@@ -255,6 +255,10 @@ class RoleUser(models.Model):
         app_label = 'user'
 
 
+    def __str__(self):
+        return f'{self.title}'
+
+
 class User(AbstractBaseUser, PermissionsMixin, CleanFieldsMixin,UserMethodsMixin,metaclass=DynamicFieldMeta):
     """
     Custom User Model

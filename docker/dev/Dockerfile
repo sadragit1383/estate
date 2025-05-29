@@ -10,13 +10,13 @@ RUN apt-get update && \
     libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# نصب پکیج‌ها (شامل watchdog)
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# استفاده از watchmedo برای ریلود خودکار
+
 CMD ["watchmedo", "auto-restart", \
      "--directory=./", \
      "--pattern=*.py", \

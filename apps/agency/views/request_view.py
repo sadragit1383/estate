@@ -6,7 +6,7 @@ from apps.user.models.permissions.user_permission import IsAgencyOwner
 from ..services.agency_service import CollaborationService
 from ..selectors.agency_selector import CollaborationSelector
 from apps.user.models.user_model import User
-from apps.user.response_handler import ResponseHandler  # فرض مسیر
+from apps.user.response_handler import ResponseHandler 
 from ..models.requestagency_model import RequestCollaborationAgency,StatusResponse
 
 from rest_framework.response import Response
@@ -29,7 +29,7 @@ class CollaborationRequestAPIView(APIView):
                 agency_user=request.user,
                 mobileNumber=serializer.validated_data['mobileNumber'],
                 role=serializer.validated_data['role'],
-                message=serializer.validated_data.get('request_message')
+                message=serializer.validated_data.get('requestMessage')
             )
             return ResponseHandler.success(
                 message="درخواست همکاری با موفقیت ارسال شد",
@@ -91,8 +91,8 @@ class CollaborationResponseAPIView(APIView):
     def post(self, request):
         try:
             request_id = request.data.get('id')
-            response_type = request.data.get('response_type')
-            response_message = request.data.get('response_message', '')
+            responseType = request.data.get('responseType')
+            responseMessage = request.data.get('responseMessage', '')
 
             # بررسی وجود فیلدهای اجباری
             if not request_id:
@@ -102,20 +102,20 @@ class CollaborationResponseAPIView(APIView):
                     'errors': {'id': ['این فیلد الزامی است']}
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            if not response_type:
+            if not responseType:
                 return Response({
                     'success': False,
                     'message': 'نوع پاسخ الزامی است',
-                    'errors': {'response_type': ['این فیلد الزامی است']}
+                    'errors': {'responseType': ['این فیلد الزامی است']}
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # بررسی معتبر بودن نوع پاسخ
             valid_responses = ['accepted', 'rejected']
-            if response_type not in valid_responses:
+            if responseType not in valid_responses:
                 return Response({
                     'success': False,
                     'message': 'نوع پاسخ نامعتبر است',
-                    'errors': {'response_type': [f'باید یکی از این مقادیر باشد: {", ".join(valid_responses)}']}
+                    'errors': {'responseType': [f'باید یکی از این مقادیر باشد: {", ".join(valid_responses)}']}
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # یافتن درخواست همکاری
@@ -139,11 +139,11 @@ class CollaborationResponseAPIView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # پردازش پاسخ
-            if response_type == 'accepted':
-                collaboration_request.accept(response_message)
+            if responseType == 'accepted':
+                collaboration_request.accept(responseMessage)
                 message = 'درخواست همکاری با موفقیت پذیرفته شد'
-            elif response_type == 'rejected':
-                collaboration_request.reject(response_message)
+            elif responseType == 'rejected':
+                collaboration_request.reject(responseMessage)
                 message = 'درخواست همکاری رد شد'
 
             return Response({
@@ -152,7 +152,7 @@ class CollaborationResponseAPIView(APIView):
                 'data': {
                     'id': str(collaboration_request.id),
                     'status': collaboration_request.status,
-                    'response_message': collaboration_request.response_message,
+                    'responseMessage': collaboration_request.responseMessage,
                     'updated_at': collaboration_request.updated_at
                 }
             }, status=status.HTTP_200_OK)
