@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models.agency_model import Agency, Consultant, Manager
+from .models.agency_model import Agency, Consultant, Manager,RejectedAgency
 from .models.requestagency_model import RequestCollaborationAgency,StatusResponse, Role
 from django.utils.html import format_html
 
@@ -13,10 +13,11 @@ class CityInline(admin.TabularInline):
     verbose_name_plural = _("Cities")
 
 class AgencyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'status', 'province', 'created_at')
-    list_filter = ('status', 'province', 'created_at')
+
+    list_display = ('user_id','name', 'user', 'status', 'province', 'createdAt')
+    list_filter = ('status', 'province', 'createdAt')
     search_fields = ('name', 'user__username', 'user__phone')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('createdAt', 'updatedAt')
     fieldsets = (
         (_("Basic Information"), {
             'fields': ('user', 'name', 'status')
@@ -33,7 +34,7 @@ class AgencyAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         (_("Timestamps"), {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('createdAt', 'updatedAt'),
             'classes': ('collapse',)
         }),
     )
@@ -54,10 +55,10 @@ class AgencyAdmin(admin.ModelAdmin):
     reject_agencies.short_description = _("Reject selected agencies")
 
 class StaffAdmin(admin.ModelAdmin):
-    list_display = ('user', 'agency', 'created_at')
+    list_display = ('user', 'agency', 'createdAt')
     search_fields = ('user__username', 'user__phone', 'agency__name')
-    readonly_fields = ('created_at', 'updated_at')
-    list_filter = ('agency', 'created_at')
+    readonly_fields = ('createdAt', 'updatedAt')
+    list_filter = ('agency', 'createdAt')
 
 @admin.register(Consultant)
 class ConsultantAdmin(StaffAdmin):
@@ -79,12 +80,12 @@ class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
         'role',
         'status_colored',
         'isActive',
-        'created_at',
+        'createdAt',
     )
-    list_filter = ('status', 'role', 'isActive', 'created_at')
+    list_filter = ('status', 'role', 'isActive', 'createdAt')
     search_fields = ('user__first_name', 'user__last_name', 'agency__name', 'request_message')
-    readonly_fields = ('created_at', 'updated_at')
-    ordering = ('-created_at',)
+    # readonly_fields = ('createdAt', 'updatedAt')
+    ordering = ('-createdAt',)
     list_per_page = 25
 
     def user_full_name(self, obj):
@@ -124,8 +125,36 @@ class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
         }),
         ('تاریخ‌ها', {
             'fields': (
-                'created_at',
-                'updated_at',
+                'createdAt',
+                'updatedAt',
             )
         }),
     )
+
+
+@admin.register(RejectedAgency)
+class RejectedAgencyAdmin(admin.ModelAdmin):
+    # تنظیمات نمایش لیست رکوردها
+    list_display = ('agency_name', 'text', 'createdAt', 'updatedAt')
+    list_filter = ('createdAt', 'updatedAt')
+    search_fields = ('agency__name', 'text')
+    ordering = ('-createdAt',)
+    date_hierarchy = 'createdAt'
+
+    # تنظیمات نمایش جزئیات هر رکورد
+    fieldsets = (
+        ('اطلاعات اصلی', {
+            'fields': ('agency', 'text')
+        }),
+        ('تاریخ‌ها', {
+            'fields': ('createdAt', 'updatedAt'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ('createdAt', 'updatedAt')
+
+    # تابع سفارشی برای نمایش نام آژانس
+    def agency_name(self, obj):
+        return obj.agency.name if obj.agency else '-'
+    agency_name.short_description = 'نام آژانس'

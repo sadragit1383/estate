@@ -8,8 +8,16 @@ from  ..models.service.agency_service import AgencyService
 from apps.core.authentication.accesstoken.authentication import CustomJWTAuthentication
 from ..models.requestagency_model import StatusResponse,RequestCollaborationAgency
 from apps.user.response_handler import ResponseHandler
-from apps.user.models.permissions.user_permission import IsAgencyOwner
-from ..models.agency_model import Agency
+from apps.user.models.permissions.user_permission import IsAgencyOwner,IsAdmin
+from ..models.agency_model import Agency,RejectedAgency,SubjectBan
+from django.utils.decorators import method_decorator
+from apps.user.models.user_model import banUsers
+import utils
+from ..serializers.agency_serializers import RejectAgencySerializer,AgencyDetailSerializer
+from uuid import UUID
+import logging
+logger = logging.getLogger(__name__)
+
 
 class AgencyCreateAPIView(APIView):
 
@@ -50,6 +58,7 @@ class AgencyCreateAPIView(APIView):
 
 
 
+@method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=24), name='dispatch')
 
 class CollaborationRequestAgencyAPIView(APIView):
 
@@ -115,3 +124,142 @@ class DeactivateAgencyMemberAPIView(APIView):
             return Response({'success': 'کاربر با موفقیت غیرفعال شد'}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class RejectAgencyAPIView(APIView):
+    permission_classes = [IsAuthenticated,IsAdmin]
+
+    def post(self, request):
+        serializer = RejectAgencySerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            agency_id = serializer.validated_data['agency']['id']
+            text = serializer.validated_data['text']
+
+            # پیدا کردن آژانس
+            agency = Agency.objects.get(pk=agency_id)
+
+            # رد کردن آژانس
+            agency.status = Agency.Status.REJECTED
+            agency.save()
+
+            # ذخیره در RejectedAgency
+            RejectedAgency.objects.create(
+                agency=agency,
+                text=text
+            )
+
+            # ذخیره در banUsers
+            banUsers.objects.create(
+                user=agency.user,
+                text=text,
+                banSubject=SubjectBan.AGENCY
+            )
+
+            return Response(
+                {'detail': 'آژانس با موفقیت رد شد.'},
+                status=status.HTTP_200_OK
+            )
+
+        except Agency.DoesNotExist:
+            return Response(
+                {'detail': 'آژانس مورد نظر یافت نشد.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+class AgencyConfirmationAPIView(APIView):
+    """
+    API View برای تایید آژانس توسط ادمین
+    """
+    permission_classes = [IsAdmin]  # فقط کاربران ادمین می‌توانند آژانس‌ها را تایید کنند
+
+    def post(self, request):
+        try:
+            agency_id = request.data.get('agencyId')
+
+            # اعتبارسنجی وجود agencyId در بدنه درخواست
+            if not agency_id:
+                return Response(
+                    {'success': False, 'message': 'فیلد agencyId الزامی است'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # اعتبارسنجی فرمت UUID
+            try:
+                agency_uuid = UUID(agency_id)
+            except ValueError:
+                return Response(
+                    {'success': False, 'message': 'فرمت agencyId نامعتبر است'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # فراخوانی متد confirm_agency از مدل Agency
+            success, message = Agency.confirm_agency(agency_uuid)
+
+            if success:
+                return Response(
+                    {'success': True, 'message': message},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {'success': False, 'message': message},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.error(f"خطا در تایید آژانس: {str(e)}", exc_info=True)
+            return Response(
+                {'success': False, 'message': 'خطای سرور در پردازش درخواست'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+class AgencyAPIView(APIView):
+    """
+    API برای دریافت اطلاعات آژانس (فقط برای آژانس لاگین شده)
+    """
+    permission_classes = [IsAuthenticated,IsAgencyOwner]
+
+    def get(self, request):
+        try:
+            # دریافت آژانس مربوط به کاربر لاگین شده
+            agency = Agency.objects.select_related(
+                'user', 'province'
+            ).prefetch_related(
+                'cities',
+                'consultants__user',
+                'managers__user'
+            ).get(user=request.user)
+
+            serializer = AgencyDetailSerializer(agency)
+            return Response({
+                'success': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except Agency.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'شما به عنوان آژانس ثبت نشده‌اید'
+            }, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

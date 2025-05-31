@@ -1,5 +1,5 @@
 from django.urls import path
-from .views.agency_view import AgencyCreateAPIView,CollaborationRequestAgencyAPIView,DeactivateAgencyMemberAPIView
+from .views.agency_view import AgencyAPIView,AgencyConfirmationAPIView,RejectAgencyAPIView,AgencyCreateAPIView,CollaborationRequestAgencyAPIView,DeactivateAgencyMemberAPIView
 from .views.request_view import CollaborationRequestAPIView,CollaborationRequestListAPIView,CollaborationResponseAPIView
 
 urlpatterns = [
@@ -10,4 +10,8 @@ urlpatterns = [
     path('collaboration/respond', CollaborationResponseAPIView.as_view(), name='collaboration-respond'),
     path('listrequest/agency',CollaborationRequestAgencyAPIView.as_view()),
     path('agency/deactivemember', DeactivateAgencyMemberAPIView.as_view()),
+    path('agency/reject', RejectAgencyAPIView.as_view()),
+    path('agency/confirm', AgencyConfirmationAPIView.as_view()),
+     path('getagency', AgencyAPIView.as_view(), name='my-agency'),
+
 ]

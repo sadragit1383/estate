@@ -23,8 +23,8 @@ profile_uploader = utils.FileUpload('profile', 'avatars')
 # ================ Shared Timestamp Model =======================
 
 class TimestampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
@@ -86,7 +86,7 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
 
     def deactivate_member(self, user_id):
 
-       
+
 
         from .requestagency_model import RequestCollaborationAgency, StatusResponse
 
@@ -121,6 +121,35 @@ class Agency(CleanFieldsMixin,TimestampedModel,metaclass=DynamicFieldMeta):
 
 
 
+    @classmethod
+    def confirm_agency(cls, agency_id):
+
+        try:
+            agency = cls.objects.get(pk=agency_id)
+
+            if agency.status == cls.Status.ACTIVE:
+                return False, "این آژانس قبلاً تایید شده است"
+
+            # تایید آژانس
+            agency.status = cls.Status.ACTIVE
+            agency.save()
+
+            # تغییر نقش کاربر به agency
+            from apps.user.models.user_model import RoleUser
+            agency_role, _ = RoleUser.objects.get_or_create(
+                slug='agency',
+                defaults={'title': 'Agency', 'isActive': True}
+            )
+            agency.user.role = agency_role
+            agency.user.save()
+
+            return True, "آژانس با موفقیت تایید شد"
+
+        except cls.DoesNotExist:
+            return False, "آژانس با این شناسه یافت نشد"
+        except Exception as e:
+            return False, f"خطا در تایید آژانس: {str(e)}"
+
     # ================== Staff Base ==================
 
 class StaffBase(TimestampedModel):
@@ -134,6 +163,7 @@ class StaffBase(TimestampedModel):
 
 
 # ================== Consultant ==================
+
 
 class Consultant(StaffBase):
     class Meta:
@@ -153,3 +183,15 @@ class Manager(StaffBase):
 
     def __str__(self):
         return f'Manager: {self.user}'
+
+
+class RejectedAgency(TimestampedModel):
+
+    agency = models.ForeignKey(Agency,verbose_name='اژآنس',blank=True,null=True,on_delete=models.CASCADE)
+    text = models.TextField(verbose_name='متن پیام',blank=True,null=True)
+
+
+    def __str__(self):
+        return f'{self.text}'
+
+

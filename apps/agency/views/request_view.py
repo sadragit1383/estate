@@ -6,12 +6,15 @@ from apps.user.models.permissions.user_permission import IsAgencyOwner
 from ..services.agency_service import CollaborationService
 from ..selectors.agency_selector import CollaborationSelector
 from apps.user.models.user_model import User
-from apps.user.response_handler import ResponseHandler 
+from apps.user.response_handler import ResponseHandler
 from ..models.requestagency_model import RequestCollaborationAgency,StatusResponse
 
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
+from django.utils.decorators import method_decorator
+
+import utils
 
 
 
@@ -80,6 +83,7 @@ class CollaborationRequestListAPIView(APIView):
 
 
 
+@method_decorator(utils.rate_limit_ip(max_requests=3, time_frame_hours=1), name='dispatch')
 
 class CollaborationResponseAPIView(APIView):
     """

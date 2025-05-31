@@ -74,12 +74,12 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
         verbose_name='پاسخ آژانس'
     )
 
-    created_at = models.DateTimeField(
+    createdAt = models.DateTimeField(
         auto_now_add=True,
         verbose_name='تاریخ ایجاد'
     )
 
-    updated_at = models.DateTimeField(
+    updateAt = models.DateTimeField(
         auto_now=True,
         verbose_name='تاریخ آخرین ویرایش'
     )
@@ -91,7 +91,7 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
 
     class Meta:
         db_table = 'agency_collaboration_requests'
-        ordering = ['-created_at']
+        ordering = ['-createdAt']
         indexes = [
             models.Index(fields=['agency', 'user']),
             models.Index(fields=['status']),
@@ -111,11 +111,10 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
         existing_request = RequestCollaborationAgency.objects.filter(
             agency=self.agency,
             user=self.user
-        ).exclude(pk=self.pk).order_by('-created_at').first()
+        ).exclude(pk=self.pk).order_by('-createdAt').first()
 
         if existing_request and existing_request.status in ['accepted', 'rejected','pending']:
             raise ValidationError("درخواست برای این کاربر و آژانس قبلاً ثبت و بررسی شده است")
-
 
 
 
