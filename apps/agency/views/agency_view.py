@@ -17,7 +17,7 @@ from ..serializers.agency_serializers import RejectAgencySerializer,AgencyDetail
 from uuid import UUID
 import logging
 logger = logging.getLogger(__name__)
-
+from ..serializers.agency_serializers import UpdateAgencySerializer
 
 class AgencyCreateAPIView(APIView):
 
@@ -42,6 +42,7 @@ class AgencyCreateAPIView(APIView):
                 banner_image=request.FILES.get('bannerImage'),
                 logo_image=request.FILES.get('logoImage')
             )
+
             return Response({
                 'status': 'success',
                 'data': {
@@ -89,10 +90,10 @@ class CollaborationRequestAgencyAPIView(APIView):
                 "mobileNumber": req.user.mobileNumber,
                 "role": req.get_role_display(),
                 "status": req.get_status_display(),
-                "createdAt": req.created_at.strftime("%Y-%m-%d %H:%M"),
+                "createdAt": req.createdAt.strftime("%Y-%m-%d %H:%M"),
                 "isActive": req.isActive,
             }
-            for req in requests.order_by('-created_at')
+            for req in requests.order_by('-createdAt')
         ]
 
         return ResponseHandler.success(
@@ -263,3 +264,22 @@ class AgencyAPIView(APIView):
                 'success': False,
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class UpdateAgencyAPIView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # برای آپلود عکس‌ها
+
+    def put(self, request):
+        try:
+            agency = Agency.objects.get(user=request.user)
+        except Agency.DoesNotExist:
+            return Response({"detail": "آژانس یافت نشد."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UpdateAgencySerializer(agency, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "اطلاعات با موفقیت به‌روزرسانی شد."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

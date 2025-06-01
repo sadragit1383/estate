@@ -76,14 +76,14 @@ class CollaborationRequestListAPIView(APIView):
             "role": req.role,
             "status": req.status,
             "requestMessage": req.request_message,
-            "createdAt": req.created_at.isoformat() if req.created_at else None
+            "createdAt": req.createdAt.isoformat() if req.createdAt else None
         } for req in requests]
 
         return ResponseHandler.success(data=data,message='اطلاعات با موفقیت دریافت شد')
 
 
 
-@method_decorator(utils.rate_limit_ip(max_requests=3, time_frame_hours=1), name='dispatch')
+@method_decorator(utils.rate_limit_ip(max_requests=1000, time_frame_hours=1), name='dispatch')
 
 class CollaborationResponseAPIView(APIView):
     """
@@ -157,7 +157,7 @@ class CollaborationResponseAPIView(APIView):
                     'id': str(collaboration_request.id),
                     'status': collaboration_request.status,
                     'responseMessage': collaboration_request.responseMessage,
-                    'updated_at': collaboration_request.updated_at
+                    'updatedAt': collaboration_request.updatedAt
                 }
             }, status=status.HTTP_200_OK)
 

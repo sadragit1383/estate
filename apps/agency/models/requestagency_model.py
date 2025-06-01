@@ -5,8 +5,7 @@ import uuid
 from apps.user.models.user_model import User
 from .agency_model import Agency
 from apps.user.models.validation.user_validation import CleanFieldsMixin
-from .agency_model import Consultant,Manager
-
+from .agency_model import Consultant,Manager,TimestampedModel
 
 class Role(models.TextChoices):
     MANAGER = 'manager', 'مدیر'
@@ -21,7 +20,7 @@ class StatusResponse(models.TextChoices):
     CANCELLED = 'cancelled', 'لغو شده'
 
 
-class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
+class RequestCollaborationAgency(CleanFieldsMixin,TimestampedModel,models.Model):
 
     """
     مدل برای مدیریت درخواست‌های همکاری با آژانس‌های املاک
@@ -74,15 +73,7 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
         verbose_name='پاسخ آژانس'
     )
 
-    createdAt = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='تاریخ ایجاد'
-    )
 
-    updateAt = models.DateTimeField(
-        auto_now=True,
-        verbose_name='تاریخ آخرین ویرایش'
-    )
 
     isActive = models.BooleanField(
         default=True,
@@ -156,6 +147,7 @@ class RequestCollaborationAgency(CleanFieldsMixin,models.Model):
         if responseMessage:
             self.responseMessage = responseMessage
         self.save()
+
 
     def cancel(self, responseMessage=None):
         """

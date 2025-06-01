@@ -59,7 +59,7 @@ class ConsultantSerializer(serializers.ModelSerializer):
         return f"{obj.user.firstName} {obj.user.lastName}"
 
 class ManagerSerializer(serializers.ModelSerializer):
-    
+
     user_id = serializers.UUIDField(source='user.id')
     full_name = serializers.SerializerMethodField()
     mobile_number = serializers.CharField(source='user.mobileNumber')
@@ -102,3 +102,14 @@ class AgencyDetailSerializer(serializers.ModelSerializer):
             'consultants',
             'managers'
         ]
+
+
+
+class UpdateAgencySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Agency
+        exclude = ['user', 'createdAt', 'updatedAt', 'status', 'name','profileImage','logoImage','licenceImage']  
+
+    def validate_name(self, value):
+        raise serializers.ValidationError("تغییر نام آژانس مجاز نیست.")

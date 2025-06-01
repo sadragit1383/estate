@@ -4,49 +4,39 @@ from apps.user.models.user_model import RoleUser, User
 from ..models.agency_model import Agency, RejectedAgency
 
 @receiver(pre_save, sender=Agency)
-def update_user_role_on_agency_status_change(sender, instance, **kwargs):
-    """
-    سیگنال برای تغییر نقش کاربر هنگام تغییر وضعیت آژانس
-    - وقتی آژانس تایید می‌شود: نقش کاربر به agency تغییر می‌کند
-    - وقتی آژانس رد می‌شود: نقش کاربر به user تغییر می‌کند
-    """
-    if instance.pk:  # اگر آژانس از قبل وجود دارد
-        old_agency = Agency.objects.get(pk=instance.pk)
 
-        # اگر وضعیت تغییر کرده است
-        if old_agency.status != instance.status:
-            # حالت تایید آژانس
+def update_user_role_on_agency_status_change(sender, instance, **kwargs):
+    if not instance.user:
+        return  # اگر کاربر ندارد، ادامه نده
+
+    # اگر آژانس قبلاً وجود داشته باشد
+    if instance.pk:
+        old_agency = Agency.objects.filter(pk=instance.pk).first()
+
+        if old_agency and old_agency.status != instance.status:
+            # اگر وضعیت جدید فعال است
             if instance.status == Agency.Status.ACTIVE:
-                agency_role, created = RoleUser.objects.get_or_create(
+                agency_role, _ = RoleUser.objects.get_or_create(
                     slug='agency',
-                    defaults={
-                        'title': 'Agency',
-                        'isActive': True
-                    }
+                    defaults={'title': 'Agency', 'isActive': True}
                 )
                 instance.user.role = agency_role
                 instance.user.save()
 
-            # حالت رد آژانس
+            # اگر وضعیت جدید رد شده است
             elif instance.status == Agency.Status.REJECTED:
-                user_role, created = RoleUser.objects.get_or_create(
+                user_role, _ = RoleUser.objects.get_or_create(
                     slug='user',
-                    defaults={
-                        'title': 'User',
-                        'isActive': True
-                    }
+                    defaults={'title': 'User', 'isActive': True}
                 )
                 instance.user.role = user_role
                 instance.user.save()
     else:
-        # برای آژانس جدید
+        # اگر آژانس جدید است و وضعیت فعال دارد
         if instance.status == Agency.Status.ACTIVE:
-            agency_role, created = RoleUser.objects.get_or_create(
+            agency_role, _ = RoleUser.objects.get_or_create(
                 slug='agency',
-                defaults={
-                    'title': 'Agency',
-                    'isActive': True
-                }
+                defaults={'title': 'Agency', 'isActive': True}
             )
             instance.user.role = agency_role
             instance.user.save()

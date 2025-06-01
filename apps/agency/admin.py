@@ -80,13 +80,13 @@ class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
         'role',
         'status_colored',
         'isActive',
-        'createdAt',
+
     )
-    list_filter = ('status', 'role', 'isActive', 'createdAt')
+    list_filter = ('status', 'role', 'isActive',)
     search_fields = ('user__first_name', 'user__last_name', 'agency__name', 'request_message')
     # readonly_fields = ('createdAt', 'updatedAt')
-    ordering = ('-createdAt',)
     list_per_page = 25
+    readonly_fields = ('createdAt', )
 
     def user_full_name(self, obj):
         return obj.user.get_full_name()
@@ -126,7 +126,6 @@ class RequestCollaborationAgencyAdmin(admin.ModelAdmin):
         ('تاریخ‌ها', {
             'fields': (
                 'createdAt',
-                'updatedAt',
             )
         }),
     )
