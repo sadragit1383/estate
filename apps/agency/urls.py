@@ -13,6 +13,6 @@ urlpatterns = [
     path('agency/deactivemember', DeactivateAgencyMemberAPIView.as_view()),
     path('agency/reject', RejectAgencyAPIView.as_view()),
     path('agency/confirm', AgencyConfirmationAPIView.as_view()),
-     path('getagency', AgencyAPIView.as_view(), name='my-agency'),
+    path('getagency', AgencyAPIView.as_view(), name='my-agency'),
 
 ]

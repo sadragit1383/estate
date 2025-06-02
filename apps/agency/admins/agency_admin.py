@@ -9,75 +9,85 @@ class AgencyAdminViewSet(viewsets.ModelViewSet):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = {
-        'status': ['exact'],
-        'name': ['exact', 'icontains'],
-        'province__name': ['exact'],
-        'cities__name': ['exact'],
-        'createdAt': ['gte', 'lte', 'exact'],
-    }
+    filterset_fields = [
+        'status',
+        'name',
+        'email',
+        'address',
+        'province',
+        'province__name',
+        'cities',
+        'cities__name',
+        'createdAt',
+        'updatedAt',
+        'user',
+
+    ]
+
     search_fields = ['name', 'email', 'address']
     ordering_fields = ['createdAt', 'name']
 
+
     @action(detail=True, methods=['get'])
     def confirm(self, request, pk=None):
-        """تایید آژانس با GET"""
-        agency = self.get_object()
-        success, message = Agency.confirm_agency(agency.pk)
-        if success:
-            return Response({'status': 'confirmed'}, status=status.HTTP_200_OK)
-        return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+        success, message = Agency.confirm_agency(pk)
+        return Response({"status": "success" if success else "error", "message": message})
 
     @action(detail=True, methods=['get'])
     def reject(self, request, pk=None):
-        """رد آژانس با GET و دریافت دلیل از query parameters"""
-        reason = request.query_params.get('reason', '')
-        if not reason:
-            return Response({'error': 'پارامتر reason الزامی است'},
-                          status=status.HTTP_400_BAD_REQUEST)
-
         agency = self.get_object()
+        reason = request.GET.get("reason")
+        if not reason:
+            return Response({"status": "error", "message": "دلیل رد کردن وارد نشده است."}, status=400)
         agency.reject_agency(reason)
-        RejectedAgency.objects.create(agency=agency, text=reason)
-        return Response({'status': 'rejected'}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "message": "آژانس با موفقیت رد شد."})
 
     @action(detail=True, methods=['get'])
     def deactivate_member(self, request, pk=None):
-        """غیرفعال کردن عضو با GET و دریافت user_id از query parameters"""
-        user_id = request.query_params.get('user_id')
+        agency = self.get_object()
+        user_id = request.GET.get("user_id")
         if not user_id:
-            return Response({'error': 'پارامتر user_id الزامی است'},
-                          status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"status": "error", "message": "شناسه کاربر اجباری است."}, status=400)
         try:
-            agency = self.get_object()
             agency.deactivate_member(user_id)
-            return Response({'status': 'member deactivated'}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": "success", "message": "عضو غیرفعال شد."})
+        except ValidationError as e:
+            return Response({"status": "error", "message": str(e)}, status=400)
+
 
 
 class ConsultantAdminViewSet(viewsets.ModelViewSet):
     queryset = Consultant.objects.all()
     serializer_class = ConsultantSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = {
-
-        'isActive': ['exact'],
-        'user__mobileNumber': ['exact'],
-    }
+    filterset_fields = [
+        'user',
+        'agency',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+        'user__mobileNumber',
+        'user__firstName',
+        'user__lastName',
+    ]
     search_fields = ['user__mobileNumber', 'user__firstName', 'user__lastName']
+
 
 
 class ManagerAdminViewSet(viewsets.ModelViewSet):
     queryset = Manager.objects.all()
     serializer_class = ManagerSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = {
-
-        'isActive': ['exact'],
-        'user__mobileNumber': ['exact'],
-    }
+    filterset_fields = [
+        'user',
+        'agency',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+        'user__mobileNumber',
+        'user__firstName',
+        'user__lastName',
+    ]
     search_fields = ['user__mobileNumber', 'user__firstName', 'user__lastName']
 
 
