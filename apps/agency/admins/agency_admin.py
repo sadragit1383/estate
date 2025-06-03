@@ -4,8 +4,17 @@ from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from ..models.agency_model import Agency, Consultant, Manager, RejectedAgency
 from .agency_serializers import RejectedAgencySerializer, AgencySerializer, ConsultantSerializer, ManagerSerializer
+from rest_framework.decorators import action
+from .agency_serializers import RequestCollaborationAgencySerializer
+from .filter import RequestCollaborationAgencyFilter
+from ..models.requestagency_model import RequestCollaborationAgency
+from rest_framework.filters import SearchFilter, OrderingFilter
+from apps.user.models.permissions.user_permission import IsAdmin
 
 class AgencyAdminViewSet(viewsets.ModelViewSet):
+
+    permission_classes = [IsAdmin]
+
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -100,3 +109,36 @@ class RejectedAgencyAdminViewSet(viewsets.ReadOnlyModelViewSet):
         'createdAt': ['gte', 'lte', 'exact'],
     }
     ordering_fields = ['createdAt']
+
+
+
+class RequestCollaborationAgencyAdminViewSet(viewsets.ModelViewSet):
+    queryset = RequestCollaborationAgency.objects.select_related('agency', 'user')
+    serializer_class = RequestCollaborationAgencySerializer
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = RequestCollaborationAgencyFilter
+    search_fields = ['agency__name', 'user__firstName', 'user__lastName']
+    ordering_fields = ['createdAt', 'status', 'role']
+    ordering = ['-createdAt']
+
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        instance = self.get_object()
+        response_msg = request.data.get('responseMessage', '')
+        instance.accept(response_msg)
+        return Response({'detail': 'درخواست تایید شد'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        instance = self.get_object()
+        response_msg = request.data.get('responseMessage', '')
+        instance.reject(response_msg)
+        return Response({'detail': 'درخواست رد شد'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        instance = self.get_object()
+        response_msg = request.data.get('responseMessage', '')
+        instance.cancel(response_msg)
+        return Response({'detail': 'درخواست لغو شد'}, status=status.HTTP_200_OK)

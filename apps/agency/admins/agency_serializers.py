@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from ..models.agency_model import Agency, Consultant, Manager, RejectedAgency
+from ..models.requestagency_model import RequestCollaborationAgency
+
 
 class AgencySerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,4 +22,12 @@ class ManagerSerializer(serializers.ModelSerializer):
 class RejectedAgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = RejectedAgency
+        fields = '__all__'
+
+
+
+
+class RequestCollaborationAgencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestCollaborationAgency
         fields = '__all__'
