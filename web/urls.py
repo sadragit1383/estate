@@ -29,6 +29,7 @@ urlpatterns = [
     path('',include('apps.user.urls')),
     path('',include('apps.agency.urls')),
     path('',include('apps.agency.admins.agency_admin_url')),
+    path('',include('apps.estate.urls')),
     #=====================================================
     path('',include('apps.core.urls')),
 
