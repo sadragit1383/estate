@@ -12,9 +12,8 @@ def upload_to_adv_gallery(instance, filename):
     return os.path.join("advertisement_gallery", "images", filename)
 
 
-
 class ImageResizer:
-    """کلاس کمکی برای تغییر اندازه تصاویر"""
+
 
     @staticmethod
     def resize_image(image, width, height):
@@ -30,10 +29,8 @@ class ImageResizer:
         image.save(path, format=format, quality=quality, optimize=True)
 
 
-
 def get_expiry_date():
     return timezone.now() + timedelta(days=30)
-
 
 def upload_to_original(instance, filename):
     ext = filename.split('.')[-1]

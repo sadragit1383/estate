@@ -1,107 +1,108 @@
 import os
-from django.db import models
+import uuid
 from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
-from .base import BaseModel
-from .utilities import (
-    upload_to_original,
-    upload_to_thumbnail,
-    upload_to_small,
-    upload_to_medium,
-    upload_to_large
-)
+from django.conf import settings
+from django.db import models
 
-class AdvertisementGallery(BaseModel):
+
+# ------------------ Upload Path Functions ------------------
+
+def upload_original(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{instance.id}.{ext}"
+    return os.path.join("advertisement_gallery/original/", filename)
+
+def upload_thumbnail(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{instance.id}.{ext}"
+    return os.path.join("advertisement_gallery/xs/", filename)
+
+def upload_small(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{instance.id}.{ext}"
+    return os.path.join("advertisement_gallery/sm/", filename)
+
+def upload_medium(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{instance.id}.{ext}"
+    return os.path.join("advertisement_gallery/md/", filename)
+
+def upload_large(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{instance.id}.{ext}"
+    return os.path.join("advertisement_gallery/lg/", filename)
+
+# ------------------ AdvertisementGallery Model ------------------
+
+class AdvertisementGallery(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     advertisement = models.ForeignKey(
-        'Advertisement',
-        on_delete=models.CASCADE,
-        verbose_name='آگهی',
-        related_name='gallery'
+        'Advertisement', on_delete=models.CASCADE,
+        related_name='advertisement_gallery',
+        verbose_name='آگهی'
     )
 
-    original_image = models.ImageField(
-        upload_to=upload_to_original,
-        verbose_name='تصویر اصلی'
-    )
+    org_image = models.ImageField(upload_to=upload_original, verbose_name='تصویر اصلی', blank=True, null=True)
+    thumbnail_image = models.ImageField(upload_to=upload_thumbnail, verbose_name='تصویر بند انگشتی', blank=True, null=True)
+    small_image = models.ImageField(upload_to=upload_small, verbose_name='تصویر کوچک', blank=True, null=True)
+    medium_image = models.ImageField(upload_to=upload_medium, verbose_name='تصویر متوسط', blank=True, null=True)
+    large_image = models.ImageField(upload_to=upload_large, verbose_name='تصویر بزرگ', blank=True, null=True)
 
-    thumbnail = models.ImageField(
-        upload_to=upload_to_thumbnail,
-        verbose_name='تصویر بند انگشتی',
-        blank=True
-    )
-
-    small = models.ImageField(
-        upload_to=upload_to_small,
-        verbose_name='تصویر کوچک',
-        blank=True
-    )
-
-    medium = models.ImageField(
-        upload_to=upload_to_medium,
-        verbose_name='تصویر متوسط',
-        blank=True
-    )
-
-    large = models.ImageField(
-        upload_to=upload_to_large,
-        verbose_name='تصویر بزرگ',
-        blank=True
-    )
-
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    is_org = models.BooleanField(default=False, verbose_name='عکس شاخص')
+    slug = models.CharField(max_length=50, verbose_name='اسلاگ', blank=True, null=True)
 
     class Meta:
         verbose_name = 'گالری آگهی'
         verbose_name_plural = 'گالری‌های آگهی'
 
-    def save(self, *args, **kwargs):
-        if not self.pk and self.original_image:
-            # برای تصاویر جدید، نسخه‌های مختلف ایجاد می‌کنیم
-            super().save(*args, **kwargs)
-            self.create_image_variations()
-        else:
-            super().save(*args, **kwargs)
+    def __str__(self):
+        return f"{self.advertisement.title} - تصویر"
 
-    def create_image_variations(self):
-        """ایجاد نسخه‌های مختلف از تصویر اصلی"""
-        if not self.original_image:
+    def resize_and_save_new_image(self, source_image_path, destination_path, width, height):
+        """Resize and save image to the given path."""
+        try:
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+            img = Image.open(source_image_path)
+            img_format = img.format if img.format else 'JPEG'
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+            img.thumbnail((width, height), Image.LANCZOS)
+            img.save(destination_path, format=img_format, quality=95, optimize=True)
+            return destination_path
+        except Exception as e:
+            print(f"خطا در تغییر اندازه تصویر: {e}")
+            return None
+
+    def save(self, *args, **kwargs):
+        is_new = not self.pk
+        super().save(*args, **kwargs)
+
+        if not self.org_image:
             return
 
-        image = Image.open(self.original_image)
-        image_format = image.format if image.format else 'JPEG'
+        original_image_path = self.org_image.path
+        if not os.path.exists(original_image_path):
+            print(f"تصویر اصلی یافت نشد: {original_image_path}")
+            return
 
-        # تبدیل به RGB اگر تصویر RGBA است
-        if image.mode in ('RGBA', 'P'):
-            image = image.convert('RGB')
+        updates = []
 
-        # ایجاد نسخه‌های مختلف
-        sizes = {
-            'thumbnail': (192, 108),
-            'small': (320, 170),
-            'medium': (768, 480),
-            'large': (1280, 768)
-        }
+        def process_variant(field_name, upload_func, width, height):
+            nonlocal updates
+            if getattr(self, field_name):
+                return
+            path = os.path.join(settings.MEDIA_ROOT, upload_func(self, f"{self.id}.jpg"))
+            resized_path = self.resize_and_save_new_image(original_image_path, path, width, height)
+            if resized_path:
+                setattr(self, field_name, os.path.relpath(resized_path, settings.MEDIA_ROOT))
+                updates.append(field_name)
 
-        for size_name, dimensions in sizes.items():
-            self.resize_and_save_image(image, size_name, dimensions, image_format)
+        process_variant("thumbnail_image", upload_thumbnail, 192, 108)
+        process_variant("small_image", upload_small, 320, 170)
+        process_variant("medium_image", upload_medium, 768, 480)
+        process_variant("large_image", upload_large, 1280, 768)
 
-
-    def resize_and_save_image(self, original_image, size_name, dimensions, image_format):
-        """تغییر اندازه تصویر و ذخیره آن"""
-        resized_image = original_image.copy()
-        resized_image.thumbnail(dimensions, Image.LANCZOS)
-
-        buffer = BytesIO()
-        resized_image.save(buffer, format=image_format, quality=90)
-        buffer.seek(0)
-
-        file_name = os.path.basename(self.original_image.name)
-        file_path = f"{size_name}/{file_name}"
-
-        # ذخیره فایل
-        file_field = getattr(self, size_name)
-        file_field.save(file_path, ContentFile(buffer.read()), save=False)
-        buffer.close()
-
-        # ذخیره مدل بدون فراخوانی دوباره متد save
-        super().save(update_fields=[size_name])
+        if updates:
+            super().save(update_fields=updates + ["is_active", "is_org", "slug"])
