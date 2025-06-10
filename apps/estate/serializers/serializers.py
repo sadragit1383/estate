@@ -3,7 +3,9 @@
 from rest_framework import serializers
 from apps.estate.models.gallery import AdvertisementGallery
 from apps.estate.models.advertisement import Advertisement
-from ..utils.estate_utils import get_model_fields
+from rest_framework import serializers
+from ..utils.estate_utils import AdvancedModelFieldExtractor
+
 
 class AdvertisementGallerySerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,44 +13,37 @@ class AdvertisementGallerySerializer(serializers.ModelSerializer):
         fields = ['large_image', 'medium_image', 'small_image', 'thumbnail_image']
 
 
-class AdvertisementListSerializer(serializers.ModelSerializer):
+class AdvertisementListSerializer(serializers.Serializer):
+    def to_representation(self, instance):
+        request = self.context.get('request')  # ابتدا تعریف شود!
 
-    propertyType = serializers.SerializerMethodField()
-    advType = serializers.SerializerMethodField()
-    images = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Advertisement
-        fields = [
+        fields_to_extract = [
             'id',
             'title',
             'price',
             'createdAt',
-            'propertyType',
-            'advType',
-            'images',
+            'propertyType.title',
+            'advType.title',
+            'city.name'
         ]
 
-    def get_propertyType(self, obj):
+        extracted_data = AdvancedModelFieldExtractor.extract_fields(
+            model_instance=instance,
+            fields_to_extract=fields_to_extract,
+            context={'request': request}
+        )
 
-        if obj.propertyType:
-            return obj.propertyType.parent.title if obj.propertyType.parent else obj.propertyType.title
-        return None
+        # استخراج تصاویر مربوطه
+        gallery_images = AdvertisementGallery.objects.filter(advertisement=instance)
+        images = [request.build_absolute_uri(g.large_image.url) for g in gallery_images if g.large_image]
 
-    def get_advType(self, obj):
-        # برگرداندن عنوان propertyType یا parent آن (اگر وجود دارد)
-        if obj.propertyType:
-            return obj.advType.title if obj.propertyType else obj.advType.title
-        return None
-
-    def get_images(self, obj):
-        request = self.context.get('request')
-        if not request:
-            return []
-
-        # برگرداندن لیست URL تصاویر با بررسی وجود فیلد large_image
-        return [
-            request.build_absolute_uri(img.large_image.url)
-            for img in obj.advertisement_gallery.filter(is_active=True)
-            if img.large_image
-        ]
+        return {
+            'id': extracted_data.get('id'),
+            'title': extracted_data.get('title'),
+            'price': extracted_data.get('price'),
+            'createdAt': extracted_data.get('createdAt'),
+            'propertyType': extracted_data.get('propertyType.title'),
+            'advType': extracted_data.get('advType.title'),
+            'images': images,
+            'city':extracted_data.get('city.name')
+        }
