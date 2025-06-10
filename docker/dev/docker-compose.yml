@@ -9,7 +9,7 @@ services:
     volumes:
       - ../../:/app
     ports:
-      - "8000:8000"
+      - "3001:3001"
     environment:
       - DEBUG=1
       - PYTHONUNBUFFERED=1

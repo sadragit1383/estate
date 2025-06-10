@@ -87,3 +87,5 @@ class SecretAdvertisement(models.Model):
     isFlagged = models.BooleanField(default=False, verbose_name='وضعیت آگهی مشکوک')
 
 
+
+

@@ -53,6 +53,7 @@ class AdvertisementGallery(models.Model):
     is_org = models.BooleanField(default=False, verbose_name='عکس شاخص')
     slug = models.CharField(max_length=50, verbose_name='اسلاگ', blank=True, null=True)
 
+
     class Meta:
         verbose_name = 'گالری آگهی'
         verbose_name_plural = 'گالری‌های آگهی'

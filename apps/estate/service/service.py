@@ -72,3 +72,4 @@ class AdvertisementService:
             return secret
         except Advertisement.DoesNotExist:
             raise ValidationError("آگهی مورد نظر یافت نشد")
+
