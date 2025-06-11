@@ -15,7 +15,9 @@ class AdvertisementGallerySerializer(serializers.ModelSerializer):
 
 class AdvertisementListSerializer(serializers.Serializer):
     def to_representation(self, instance):
-        request = self.context.get('request')  # ابتدا تعریف شود!
+
+
+        request = self.context.get('request')
 
         fields_to_extract = [
             'id',
@@ -33,7 +35,6 @@ class AdvertisementListSerializer(serializers.Serializer):
             context={'request': request}
         )
 
-        # استخراج تصاویر مربوطه
         gallery_images = AdvertisementGallery.objects.filter(advertisement=instance)
         images = [request.build_absolute_uri(g.large_image.url) for g in gallery_images if g.large_image]
 
